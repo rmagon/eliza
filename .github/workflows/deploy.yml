@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - airlyftintern
+
+env:
+  REGISTRY: docker.pkg.github.com/${{ github.repository }}
+  IMAGE_NAME: eliza
+  STACK_NAME: eliza
+  SERVER_HOME_PATH: "/home/projects/eliza"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23.3.0
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install -r --no-frozen-lockfile
+
+      - name: Install Protobuf Compiler
+        run: sudo apt-get install -y protobuf-compiler
+
+      - name: Build packages
+        run: pnpm run build
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_KEY }}
+          script: |
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker compose down
+            docker compose up -d
