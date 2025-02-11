@@ -24,14 +24,14 @@ RUN npm install -g pnpm@9.15.4 && \
     libpango1.0-dev \
     libgif-dev \
     openssl \
-    libssl-dev libsecret-1-dev && \
-    libnss3\
-    libnspr4\
-    libatk1.0-0\
-    libatk-bridge2.0-0\
-    libcups2\ 
-    libxcomposite1\
-    libxdamage1\
+    libssl-dev libsecret-1-dev \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \ 
+    libxcomposite1 \
+    libxdamage1 \
     libatspi2.0-0 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
